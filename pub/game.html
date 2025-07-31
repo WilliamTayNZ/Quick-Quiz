@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Quiz Battle!</title>
+  <link rel="stylesheet" href="game.css" />
+</head>
+<body>
+  <div class="question">
+    <div>
+      <h1>Loading question...</h1>
+      <div class="timer-row">
+        <div id="timer" class="timer-box">Time: <span id="time-remaining">10</span>s</div>
+        <div id="next-round-message" class="timer-box next" style="display: none;">Next question in 5...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="triangleTop"></div>
+  <div class="triangleTopShadow"></div>
+  <div class="triangleBottom"></div>
+  <div class="triangleLeft"></div>
+  <div class="triangleRight"></div>
+
+  <div id="answer1" class="answer">answer 1</div>
+  <div id="answer2" class="answer">answer 2</div>
+  <div id="answer3" class="answer">answer 3</div>
+  <div id="answer4" class="answer">answer 4</div>
+
+  <div id="player1" class="player-points">Player 1: 0</div>
+  <div id="player2" class="player-points">Player 2: 0</div>
+
+  <script type="module">
+ import { loadQuestion, currentQuestionIndex } from './game.js';
+
+const params = new URLSearchParams(window.location.search);
+const raw = params.get("data");
+let parsedQuestions = [];
+
+if (raw) {
+  try {
+    const dictionary = JSON.parse(decodeURIComponent(raw));
+    parsedQuestions = Object.entries(dictionary).map(([question, options]) => ({
+      question,
+      options
+    }));
+  } catch (err) {
+    console.error("❌ Failed to parse URL data:", err);
+    alert("There was an error loading the quiz questions from the URL.");
+  }
+}
+
+// DEBUGGING — see if anything got parsed
+console.log("📦 Parsed questions:", parsedQuestions);
+
+// ✅ Fallback to a default question if nothing is parsed
+if (!parsedQuestions.length) {
+  parsedQuestions = [
+    {
+      question: "Fallback: What is 2 + 2?",
+      options: ["4", "3", "5", "6"]
+    }
+  ];
+}
+
+loadQuestion(currentQuestionIndex, parsedQuestions);
+
+  </script>
+</body>
+</html>

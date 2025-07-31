@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quick Quiz!</title>
+  <link rel="stylesheet" href="index.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <div class="horizontal-row">
+      <img class="side-img" src="media/penguin_guy.gif" alt="Left Icon" style="height:150px;width:150px;" />
+      <h2 style="font-size:8rem;">QUICK <br>QUIZ!</h2>
+      <img class="side-img" src="media/penguin_guy2.gif" alt="Right Icon" style="height:150px;width:150px;"/>
+    </div>
+
+    <p>EDUCATIONAL QUIZ BATTLE WITH A FRIEND!</p>
+
+    <div class="menu-buttons">
+      <a href="instructions.html" style="text-decoration: none;">
+      <div class="instructions">
+        <div class="instructions-text">INSTRUCTIONS</div>
+      </div>
+      </a>
+
+      <label for="pdfInput" class="instructions upload-wrapper" style="cursor: pointer;">
+        <div class="instructions-text">UPLOAD PDF</div>
+        <input type="file" id="pdfInput" accept="application/pdf" style="display: none;" />
+      </label>
+
+      <a href="practice.html" style="text-decoration: none;">    
+        <div class="instructions">
+          <div class="instructions-text">PRACTICE MODE</div>
+        </div>
+      </a>
+    </div>
+      
+    
+
+    <!-- Loading Spinner -->
+    <img id="loading-spinner" src="https://i.gifer.com/ZZ5H.gif" alt="Loading..." style="display: none; margin-top: 30px; width: 80px;" />
+  </div>
+
+  <script>
+    const fileInput = document.getElementById("pdfInput");
+    const loadingSpinner = document.getElementById("loading-spinner");
+
+    fileInput.addEventListener("change", async () => {
+      const file = fileInput.files[0];
+      if (!file) {
+        console.log("No file selected");
+        return;
+      }
+      console.log("File selected:", file);
+
+      loadingSpinner.style.display = "block";
+
+      const reader = new FileReader();
+      reader.onload = async function () {
+        console.log("File loaded, parsing PDF...");
+        const typedArray = new Uint8Array(reader.result);
+        const pdf = await pdfjsLib.getDocument(typedArray).promise;
+
+        let textContent = '';
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const text = await page.getTextContent();
+          const pageText = text.items.map(item => item.str).join(' ');
+          textContent += `\n${pageText}`;
+        }
+        console.log("PDF text extracted, sending to /api/chat");
+
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: textContent })
+        });
+
+        console.log("Response received from /api/chat");
+        const data = await res.json();
+        const reply = data.reply || JSON.stringify(data);
+        const encoded = encodeURIComponent(reply);
+        window.location.href = `game.html?data=${encoded}`;
+      };
+
+      reader.readAsArrayBuffer(file);
+    });
+  </script>
+</body>
+</html>
